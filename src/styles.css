@@ -14,15 +14,20 @@
   pointer-events: auto;
 }
 
-/* Top island-name bar */
+/* Top island-name bar — anchored between the upstream #title-card (left:16,
+ * ~270px wide) and #palette (right:12, 168px wide). Wraps to multiple lines
+ * if the safe zone is too narrow. */
 .if-top-bar {
   position: fixed;
   top: 12px;
-  right: 12px;
+  left: 300px;
+  right: 200px;
   z-index: 11;
   display: flex;
   gap: 8px;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   pointer-events: auto;
 }
 
@@ -72,16 +77,26 @@
   letter-spacing: 0.01em;
 }
 
-/* Right rail: time-of-day + height + share */
+/* Bottom-center rail — anchored between #instructions (left, ~120px) and
+ * #hud (right:12, 168px). Three horizontal cards instead of the old
+ * vertical stack that collided with the engine's right column. */
 .if-right-rail {
   position: fixed;
-  right: 12px;
   bottom: 12px;
+  left: 150px;
+  right: 200px;
   z-index: 11;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 8px;
-  align-items: stretch;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.if-right-rail > * {
+  pointer-events: auto;
 }
 
 .if-card {
@@ -331,19 +346,29 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* Mobile compactness */
+/* Mobile compactness — palette/hud collapse to bottom strip on touch so the
+ * safe zones shift; pin to corners and let the engine handle the rest. */
 @media (max-width: 720px) {
   .if-top-bar {
     flex-wrap: wrap;
+    left: 8px;
     right: 8px;
     top: 8px;
+    justify-content: flex-end;
   }
   .if-right-rail {
+    left: 8px;
     right: 8px;
     bottom: 8px;
+    flex-direction: column;
+    align-items: stretch;
   }
   .if-card {
     padding: 8px 10px;
     font-size: 11px;
+  }
+  .if-pill {
+    font-size: 11px;
+    padding: 6px 10px;
   }
 }
