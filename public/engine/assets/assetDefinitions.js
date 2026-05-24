@@ -716,14 +716,9 @@ export function windmillBuilding() {
             }
         }
     }
-    // Blade hub + 4 blades
-    out.push({ x: cx, y: cy, z: 6, c: P.iron });
-    out.push({ x: cx + 2, y: cy, z: 6, c: P.wood });
-    out.push({ x: cx + 3, y: cy, z: 6, c: P.wood });
-    out.push({ x: cx - 2, y: cy, z: 6, c: P.wood });
-    out.push({ x: cx - 3, y: cy, z: 6, c: P.wood });
-    out.push({ x: cx, y: cy, z: 4, c: P.wood });
-    out.push({ x: cx, y: cy, z: 8, c: P.wood });
+    // Island Forge: blade hub + 4 blades intentionally NOT baked in
+    // here. They're rendered as a rotating sprite each frame by
+    // public/engine/effects/Animations.js so the real voxel parts move.
     // Blue door + window
     addDoor(out, cx, cy + 3, 0);
     addWindow(out, cx, cy - 3, 3);

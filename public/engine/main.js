@@ -185,13 +185,6 @@ function seedExampleVillage(game) {
     placeO('lantern_post', 16, 14);
     placeO('lantern_post', 12, 22);
     placeO('small_bridge', 14, H - 2);
-
-    // A few pennants near the chapel + harbor so the flag-wave animation
-    // has somewhere to land. Falls back gracefully if `small_flag` (one
-    // of the procedural extras) wasn't registered for any reason.
-    placeO('small_flag', 11, 4);
-    placeO('small_flag', 13, 18);
-    placeO('small_flag', 23, 5);
 }
 
 function applyTemplate(game, template) {
