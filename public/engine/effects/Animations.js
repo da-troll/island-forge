@@ -81,25 +81,31 @@ export class Animations {
         ctx.save();
         ctx.setTransform(cam.zoom, 0, 0, cam.zoom, cam.offsetX, cam.offsetY);
 
-        // Water shimmer — 3-frame cycle at configured fps.
-        const shimmerFrame = Math.floor(t * A.waterShimmerFps) % 3;
+        // Water shimmer — bright moving whitecaps across each water tile.
+        // Per-tile phase based on (gx + gy) so neighbouring tiles aren't
+        // in lockstep. Two horizontal dash bands sliding in opposite
+        // directions for a "broken light on water" feel.
+        ctx.fillStyle = '#ffffff';
         for (let gy = 0; gy < tm.height; gy++)
         for (let gx = 0; gx < tm.width; gx++) {
             const id = tm.terrain[gy * tm.width + gx];
-            if (id !== 'water') continue;
+            if (id !== 'water' && id !== 'sea') continue;
             const s = cellToScreen(gx + 0.5, gy + 0.5);
             const heightLift = (tm.getHeight(gx, gy) || 0) * CONFIG.height.stepPxPerLevel;
             const sx = s.x;
             const sy = s.y - heightLift;
-            // Three subtle dashes shifting position per frame.
-            ctx.globalAlpha = 0.18 + shimmerFrame * 0.06;
-            ctx.fillStyle = '#ffffff';
-            const dashY = sy + (shimmerFrame - 1) * 1.5;
+            const phase = (gx * 0.7 + gy * 0.4 + t * 1.2);
+            // Band 1: long dash sliding right.
+            const slide1 = ((phase * 12) % 28) - 14;
+            ctx.globalAlpha = 0.42 + 0.2 * Math.sin(phase * Math.PI);
             ctx.beginPath();
-            ctx.ellipse(sx - 10 + shimmerFrame * 4, dashY, 4, 1.2, 0, 0, Math.PI * 2);
+            ctx.ellipse(sx + slide1, sy + 4, 10, 1.4, 0, 0, Math.PI * 2);
             ctx.fill();
+            // Band 2: shorter dash sliding the other way.
+            const slide2 = -((phase * 8) % 22) + 11;
+            ctx.globalAlpha = 0.30 + 0.18 * Math.sin(phase * Math.PI * 1.3);
             ctx.beginPath();
-            ctx.ellipse(sx + 10 - shimmerFrame * 3, dashY + 4, 3, 1, 0, 0, Math.PI * 2);
+            ctx.ellipse(sx + slide2, sy - 5, 7, 1.2, 0, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.globalAlpha = 1;
@@ -124,65 +130,125 @@ export class Animations {
     }
 
     _paintWindmill(ctx, sx, sy, t) {
-        // Windmill blade hub sits about 36px above the tile center.
-        const hubY = sy - 38;
+        // Hub sits well above the tower — the static windmill builder
+        // puts blades at voxel z=6 (out of ~10 tower height), and the
+        // 2x2 footprint means the tower top is roughly 70-90px above the
+        // tile center. The wider radius dominates the static baked
+        // blades so the rotation reads clearly.
+        const hubY = sy - 78;
         const angle = (t * A.windmillRpm * Math.PI * 2) / 60;
+        const bladeLen = 44;
+        const bladeWide = 9;
         ctx.save();
         ctx.translate(sx, hubY);
         ctx.rotate(angle);
-        ctx.fillStyle = 'rgba(255,255,255,0.78)';
-        ctx.strokeStyle = 'rgba(45, 35, 25, 0.65)';
-        ctx.lineWidth = 1.4;
+        // Soft halo behind the blades so they "punch through" the static
+        // sprite even on bright backgrounds.
+        const halo = ctx.createRadialGradient(0, 0, 4, 0, 0, bladeLen + 6);
+        halo.addColorStop(0, 'rgba(255,255,255,0.65)');
+        halo.addColorStop(0.6, 'rgba(255,255,255,0.18)');
+        halo.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(0, 0, bladeLen + 6, 0, Math.PI * 2);
+        ctx.fill();
+        // 4 paddle blades.
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.strokeStyle = 'rgba(40, 30, 18, 0.85)';
+        ctx.lineWidth = 1.6;
         for (let i = 0; i < 4; i++) {
             ctx.save();
             ctx.rotate((i * Math.PI) / 2);
             ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(4, -22);
-            ctx.lineTo(-4, -22);
+            ctx.moveTo(0, -4);
+            ctx.lineTo(bladeWide, -bladeLen);
+            ctx.lineTo(-bladeWide, -bladeLen);
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
+            // Wood spine.
+            ctx.strokeStyle = 'rgba(90, 60, 30, 0.9)';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -bladeLen);
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(40, 30, 18, 0.85)';
+            ctx.lineWidth = 1.6;
             ctx.restore();
         }
-        // Hub cap
+        // Hub cap.
         ctx.fillStyle = '#5a4a35';
+        ctx.strokeStyle = 'rgba(20, 15, 8, 0.9)';
         ctx.beginPath();
-        ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
         ctx.restore();
     }
 
     _paintLantern(ctx, sx, sy, t) {
-        const pulse = 0.85 + 0.15 * Math.sin(t * A.lanternFlickerHz * Math.PI * 2);
-        // Lantern bulb sits ~24px above the tile center for a lantern_post.
+        // Lanterns don't glow in real daylight, but the user needs to see
+        // something is moving. Tiny warm flame flicker sitting on top of
+        // the lantern bulb regardless of time of day; the TimeOfDay layer
+        // adds the bigger ambient glow at golden/night.
+        const pulse = 0.75 + 0.25 * Math.sin(t * A.lanternFlickerHz * Math.PI * 2 + sx * 0.1);
         const bx = sx;
-        const by = sy - 22;
+        const by = sy - 28;
         ctx.save();
+        // Inner bright dot.
         ctx.globalCompositeOperation = 'lighter';
-        const grad = ctx.createRadialGradient(bx, by, 0, bx, by, 18);
-        grad.addColorStop(0, `rgba(255, 198, 90, ${0.55 * pulse})`);
+        const grad = ctx.createRadialGradient(bx, by, 0, bx, by, 10);
+        grad.addColorStop(0, `rgba(255, 220, 130, ${0.9 * pulse})`);
         grad.addColorStop(1, 'rgba(255, 198, 90, 0)');
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(bx, by, 18, 0, Math.PI * 2);
+        ctx.arc(bx, by, 10, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
 
     _paintFlag(ctx, sx, sy, t) {
-        const wave = Math.sin(t * A.flagWaveHz * Math.PI * 2) * A.flagAmplitudePx;
-        const fx = sx + 4 + wave;
-        const fy = sy - 26;
+        // Bigger, brighter flag so it actually reads. Pole anchored at
+        // tile center, flag flying right with sinusoidal wave + per-segment
+        // phase shift so the ripple travels along the cloth.
+        const baseY = sy - 6;
+        const poleH = 36;
+        const flagW = 22;
+        const flagH = 12;
         ctx.save();
-        ctx.fillStyle = '#1b5ba8';
-        ctx.strokeStyle = '#134680';
-        ctx.lineWidth = 0.8;
+        // Pole.
+        ctx.strokeStyle = '#3a2a18';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(fx, fy);
-        ctx.quadraticCurveTo(fx + 8, fy - 1 + wave * 0.4, fx + 14, fy + 2);
-        ctx.lineTo(fx + 14, fy + 8);
-        ctx.quadraticCurveTo(fx + 8, fy + 6 + wave * 0.4, fx, fy + 8);
+        ctx.moveTo(sx, baseY);
+        ctx.lineTo(sx, baseY - poleH);
+        ctx.stroke();
+        // Pole cap.
+        ctx.fillStyle = '#cc9a3a';
+        ctx.beginPath();
+        ctx.arc(sx, baseY - poleH - 1, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        // Flag cloth as 5 segments so the wave travels.
+        const seg = 5;
+        const top = baseY - poleH + 1;
+        ctx.fillStyle = '#d44545';
+        ctx.strokeStyle = 'rgba(60, 15, 15, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(sx, top);
+        for (let i = 0; i <= seg; i++) {
+            const phase = (i / seg) * Math.PI * 2;
+            const x = sx + (i / seg) * flagW;
+            const yOff = Math.sin(t * A.flagWaveHz * Math.PI * 2 + phase) * A.flagAmplitudePx * (i / seg);
+            ctx.lineTo(x, top + yOff);
+        }
+        for (let i = seg; i >= 0; i--) {
+            const phase = (i / seg) * Math.PI * 2;
+            const x = sx + (i / seg) * flagW;
+            const yOff = Math.sin(t * A.flagWaveHz * Math.PI * 2 + phase) * A.flagAmplitudePx * (i / seg);
+            ctx.lineTo(x, top + flagH + yOff);
+        }
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
