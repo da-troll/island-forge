@@ -222,6 +222,76 @@ function publishApi(game, ui, animations, tod) {
     api.tod = tod;
     api.ready = true;
 
+    // ── Pickup / move tool (placed objects only, not terrain) ────
+    // We monkey-patch Game.onPrimaryClick so that when the user enters
+    // pickup mode the next click on a placed object removes it from the
+    // map and re-attaches the asset to the cursor in place-mode with
+    // flips preserved. Click on terrain or empty cells is a no-op so the
+    // user can't accidentally bulldoze the surface they're standing on.
+    let pickupArmed = false;
+    let pickupListener = null;
+    const origOnPrimaryClick = game.onPrimaryClick.bind(game);
+    game.onPrimaryClick = (gx, gy) => {
+        if (pickupArmed) {
+            if (!game.tileMap.inBounds(gx, gy)) return;
+            const obj = game.tileMap.objectAt(gx, gy);
+            if (!obj) {
+                ui.showToast('Click a placed object to pick it up');
+                return;
+            }
+            const assetId = obj.assetId;
+            const flipH = !!obj.flipH;
+            const flipV = !!obj.flipV;
+            const removed = game.placement.erase(obj.gx, obj.gy);
+            if (!removed) return;
+            pickupArmed = false;
+            game.canvas.style.cursor = 'crosshair';
+            if (pickupListener) {
+                window.removeEventListener('keydown', pickupListener);
+                pickupListener = null;
+            }
+            game.setTool('place');
+            game.selectAsset(assetId);
+            game.flipH = flipH;
+            game.flipV = flipV;
+            game._syncPreviewFlip();
+            game.renderer.markDirty();
+            ui.showToast(`Picked up — click to place`);
+            window.dispatchEvent(new CustomEvent('island-forge:pickup-changed', {
+                detail: { armed: false },
+            }));
+            return;
+        }
+        return origOnPrimaryClick(gx, gy);
+    };
+
+    api.isPickupArmed = () => pickupArmed;
+    api.startPickup = () => {
+        if (pickupArmed) return;
+        pickupArmed = true;
+        game.canvas.style.cursor = 'grab';
+        ui.showToast('Click a placed object to pick it up');
+        pickupListener = (e) => {
+            if (e.key === 'Escape') api.cancelPickup();
+        };
+        window.addEventListener('keydown', pickupListener);
+        window.dispatchEvent(new CustomEvent('island-forge:pickup-changed', {
+            detail: { armed: true },
+        }));
+    };
+    api.cancelPickup = () => {
+        if (!pickupArmed) return;
+        pickupArmed = false;
+        game.canvas.style.cursor = 'crosshair';
+        if (pickupListener) {
+            window.removeEventListener('keydown', pickupListener);
+            pickupListener = null;
+        }
+        window.dispatchEvent(new CustomEvent('island-forge:pickup-changed', {
+            detail: { armed: false },
+        }));
+    };
+
     // Save slot operations
     api.listSlots = () => SaveSlots.list();
     api.saveSlot = (slot, overrides = {}) => SaveSlots.save(slot, {

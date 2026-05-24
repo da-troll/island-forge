@@ -59,4 +59,7 @@ export interface IslandForgeAPI {
   exportPng: (filename?: string) => boolean;
   serialize: () => SavePayload;
   applyShared: (payload: unknown) => boolean;
+  startPickup: () => void;
+  cancelPickup: () => void;
+  isPickupArmed: () => boolean;
 }

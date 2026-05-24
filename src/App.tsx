@@ -21,6 +21,25 @@ export default function App() {
   const [busy, setBusy] = useState<string | null>(null);
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([]);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [pickupArmed, setPickupArmed] = useState(false);
+
+  // Pickup tool state is owned by the engine; listen to its event so the
+  // toolbar button reflects the live state (engine clears it after a
+  // successful pickup → place, and on Esc).
+  useEffect(() => {
+    const onPickupChanged = (e: Event) => {
+      const detail = (e as CustomEvent<{ armed: boolean }>).detail;
+      setPickupArmed(!!detail?.armed);
+    };
+    window.addEventListener('island-forge:pickup-changed', onPickupChanged);
+    return () => window.removeEventListener('island-forge:pickup-changed', onPickupChanged);
+  }, []);
+
+  const onPickup = () => {
+    if (!engine) return;
+    if (engine.isPickupArmed()) engine.cancelPickup();
+    else engine.startPickup();
+  };
 
   const pushToast = useCallback((msg: string) => {
     const id = Date.now() + Math.random();
@@ -129,11 +148,13 @@ export default function App() {
           <TopBar
             islandName={islandName}
             naming={busy === 'name'}
+            pickupArmed={pickupArmed}
             onName={onNameIsland}
             onSlots={() => setModal('slots')}
             onTemplates={() => setModal('templates')}
             onShare={() => setModal('share')}
             onExport={onExport}
+            onPickup={onPickup}
             onUndo={() => engine.undo()}
             onRedo={() => engine.redo()}
             historyState={engine.historyState()}
