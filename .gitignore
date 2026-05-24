@@ -1,0 +1,11 @@
+node_modules
+out
+dist
+dist-server
+*.log
+*.tsbuildinfo
+.env
+.env.local
+edit/
+.DS_Store
+.pm2-local

@@ -1,0 +1,45 @@
+{
+  "inspired_by": "boona13/mykonos-island-voxels",
+  "project_name": "IslandForge",
+  "description": "Mediterranean voxel island builder — vendor the upstream Mykonos engine verbatim and layer on a 28×28 grid (4× the canvas area), per-cell 4-level elevation, undo/redo (50 ops), continuous animations (windmill blades, water shimmer, lantern flicker, flag wave), three time-of-day modes (Day / Golden Hour / Night with additive lantern glow + starfield), five named save slots with thumbnails, AI island namer (gpt-4o-mini, returns evocative 2-3 word Greek/Mediterranean names from the tile census), PNG export, five starter templates (Blank / Harbor Town / Hilltop Chapel / Fishing Village / Garden Estate), Floating Island mode (sky + cloud + sky-platform tiles with drifting clouds), ~15 procedural extras (fishing boat / dock / mooring post / crumbled wall / broken column / fallen arch / taverna table / amphora stack / rooftop terrace / lit window / pennant flag / fountain / cloud / mist / sky platform), and Supabase-backed community gallery with 6-character share codes and one-click 'Remix → Slot 1'. Built on the same MIT-licensed engine with React shell, Express server, pm2/Caddy deploy.",
+  "tech_stack": [
+    "Vite",
+    "React",
+    "TypeScript",
+    "Tailwind CSS v4",
+    "Express",
+    "OpenAI gpt-4o-mini",
+    "Supabase (vps project, service-role server-side)",
+    "Canvas 2D + vanilla ES modules (vendored upstream engine)",
+    "nanoid",
+    "react-router-dom"
+  ],
+  "build_date": "2026-05-24",
+  "build_time_hours": 4,
+  "status": "complete",
+  "features": [
+    "28×28 grid (4× the upstream Mykonos canvas) with same 2:1 isometric tile system",
+    "Per-cell 4-level elevation — TileMap.setHeight raises terrain + objects by stepPxPerLevel Y offset, full serialize/deserialize round-trip",
+    "Undo/redo stack (50 ops) — monkey-patches PlacementSystem.place/erase + TileMap.setHeight, bound to Ctrl+Z / Ctrl+Y, exposed via React toolbar",
+    "Continuous animations layered over the static cache: windmill blades rotate at configured RPM, water tiles 3-frame shimmer at 2fps, lanterns flicker at 1.2Hz opacity pulse, flags wave on a sine offset",
+    "Three time-of-day modes — Day (no overlay), Golden Hour (warm amber multiply + warmer sky gradient), Night (deep blue multiply + 80-star deterministic LCG starfield + additive radial glow on lanterns/lit buildings)",
+    "Five named save slots in localStorage with downscaled WebP thumbnail previews + overwrite/delete; loads carry their time-of-day and floating mode",
+    "AI Island Namer — sends top-10 tile census to gpt-4o-mini server-side, returns one evocative 2-3 word Greek/Mediterranean name (e.g. 'Cypress Tide', 'Aegean Whisper'), display above canvas",
+    "PNG export at the canvas's native resolution, filename derived from the island name",
+    "Five starter templates as embedded JSON tilemaps — Blank Canvas / Harbor Town / Hilltop Chapel (with pre-set elevation) / Fishing Village / Garden Estate — play through the same staggered placeAndAnimate pipeline as the seeded village",
+    "Floating Island mode — swaps the sea/terrain base for sky + cloud + sky-platform tiles + sky-gradient backdrop + 6 drifting parallax clouds",
+    "~15 procedural extras via voxelRenderer builder fallback — fishing boat (1×2), dock section, mooring post, crumbled wall, broken column, fallen arch (2×1), taverna table, amphora stack, rooftop terrace (2×2), glowing window, pennant flag, fountain, cloud / mist / sky-platform terrain — all registered before assetLoader runs",
+    "Supabase community gallery (vps project axcevbeemcvcanvbbdow) — POST /api/share writes a 6-char nanoid row with tilemap + heights + WebP thumbnail; GET /api/gallery returns the 48 most recent; GET /api/island/:code hydrates a read-only preview at /i/{code} with a one-click 'Remix → Slot 1' button",
+    "RLS-enabled islands table with public-readable policy + service-role server writes; one-shot /api/migrate runs the schema via Supabase Management API + supabase_pat_vps",
+    "React shell rendered above the engine — top bar (name display + 'Name your island' + Templates + Save slots + Share + Export PNG + undo/redo), right rail (time-of-day toggle group + elevation +/- + Island/Floating mode toggle), modals (slots / templates / share), toast stack, all theme-matched to the upstream Mediterranean styles",
+    "Vendored 21 upstream JS modules + 54 PNGs + 8 OGGs verbatim, MIT license preserved at UPSTREAM-LICENSE; engine modifications are additive (config.js bumped, TileMap extended, main.js exposes window.IslandForge namespace + dispatches island-forge:ready)"
+  ],
+  "live_url": "https://mvp.trollefsen.com/2026-05-24-island-forge/",
+  "github_url": "https://github.com/da-troll/island-forge",
+  "visibility": "public",
+  "quality_bounds": {
+    "stuck_frame_threshold": 1.0,
+    "min_content_chars": 600
+  },
+  "demo_video_url": "https://clawdash.storage.trollefsen.com/mvp/2026-05-24-island-forge/demo-20260524T203843.mp4"
+}

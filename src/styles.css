@@ -1,0 +1,349 @@
+@import 'tailwindcss';
+
+/* The upstream Mediterranean theme is loaded via a <link> in index.html so
+ * Vite/Tailwind doesn't try to resolve it as a module at build time. */
+
+/* React-only overlays sit above the engine in their own stacking context. */
+.island-shell-overlay {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.island-shell-overlay > * {
+  pointer-events: auto;
+}
+
+/* Top island-name bar */
+.if-top-bar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 11;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.if-pill {
+  background: rgba(251, 246, 236, 0.92);
+  border: 1px solid #d9d0bd;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  color: #2b2a26;
+  box-shadow: 0 2px 8px rgba(60, 50, 30, 0.10);
+  cursor: pointer;
+  font-size: 13px;
+  transition: transform 80ms ease, background 120ms ease;
+}
+
+.if-pill:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.if-pill:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.if-pill.if-pill--primary {
+  background: #1b5ba8;
+  color: #fff;
+  border-color: #134680;
+}
+
+.if-pill.if-pill--primary:hover {
+  background: #2e6fbc;
+}
+
+.if-pill.if-pill--ghost {
+  background: rgba(251, 246, 236, 0.55);
+}
+
+.if-name-display {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  font-style: italic;
+  color: #134680;
+  letter-spacing: 0.01em;
+}
+
+/* Right rail: time-of-day + height + share */
+.if-right-rail {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.if-card {
+  background: rgba(251, 246, 236, 0.94);
+  border: 1px solid #d9d0bd;
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(60, 50, 30, 0.10);
+  font-size: 12px;
+}
+
+.if-card-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a8678;
+  margin-bottom: 6px;
+}
+
+.if-toggle-group {
+  display: inline-flex;
+  border: 1px solid #d9d0bd;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.if-toggle-group button {
+  background: transparent;
+  border: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #51504a;
+}
+
+.if-toggle-group button.active {
+  background: #1b5ba8;
+  color: #fff;
+}
+
+/* Modal */
+.if-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 16, 8, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.if-modal {
+  background: #fbf6ec;
+  border-radius: 22px;
+  padding: 24px 28px;
+  max-width: 540px;
+  width: 100%;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+  border: 1px solid #d9d0bd;
+}
+
+.if-modal h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  color: #134680;
+  font-weight: 700;
+}
+
+.if-modal p {
+  color: #51504a;
+  margin: 0 0 14px;
+}
+
+.if-slot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.if-slot {
+  border: 1px solid #d9d0bd;
+  border-radius: 14px;
+  padding: 10px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms;
+}
+
+.if-slot:hover {
+  border-color: #1b5ba8;
+}
+
+.if-slot.empty {
+  background: #f4ede0;
+  color: #8a8678;
+  text-align: center;
+}
+
+.if-slot img {
+  width: 100%;
+  border-radius: 8px;
+  background: #ede4d2;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  display: block;
+}
+
+.if-slot-name {
+  font-weight: 600;
+  color: #2b2a26;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.if-slot-meta {
+  font-size: 11px;
+  color: #8a8678;
+}
+
+.if-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.if-template-card {
+  background: #fff;
+  border: 1px solid #d9d0bd;
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.if-template-card:hover {
+  border-color: #1b5ba8;
+  background: #f6f9fd;
+}
+
+.if-template-card .name {
+  font-weight: 600;
+  color: #134680;
+  font-size: 13px;
+}
+
+.if-template-card .desc {
+  color: #8a8678;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.if-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.if-share-link {
+  background: #f4ede0;
+  border: 1px solid #d9d0bd;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #2b2a26;
+  word-break: break-all;
+}
+
+.if-island-card {
+  background: #fff;
+  border: 1px solid #d9d0bd;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 120ms, box-shadow 120ms;
+}
+
+.if-island-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(60, 50, 30, 0.15);
+}
+
+.if-island-card img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #ede4d2;
+  object-fit: cover;
+  display: block;
+}
+
+.if-island-card .meta {
+  padding: 10px 12px;
+}
+
+.if-island-card .name {
+  font-weight: 700;
+  color: #134680;
+  font-size: 14px;
+}
+
+.if-island-card .time {
+  font-size: 11px;
+  color: #8a8678;
+  margin-top: 2px;
+}
+
+.if-gallery {
+  min-height: 100dvh;
+  background: linear-gradient(180deg, #f6efe1 0%, #ebe1cc 100%);
+  padding: 24px 20px;
+}
+
+.if-gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto 20px;
+}
+
+.if-gallery-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.if-toast-stack {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  pointer-events: none;
+}
+
+.if-toast-stack .if-toast {
+  background: #2b2a26;
+  color: #fbf6ec;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile compactness */
+@media (max-width: 720px) {
+  .if-top-bar {
+    flex-wrap: wrap;
+    right: 8px;
+    top: 8px;
+  }
+  .if-right-rail {
+    right: 8px;
+    bottom: 8px;
+  }
+  .if-card {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+}
