@@ -41,6 +41,11 @@ import { ASSET_INDEX } from '../assets/assetManifest.js';
 const TW = CONFIG.tile.w;
 const TH = CONFIG.tile.h;
 
+// Island Forge: per-level Y offset for elevation rendering. Applied
+// inside the terrain + objects cache build so cached pixels reflect the
+// current height map. Bumping tileMap setHeight invalidates both caches.
+const HEIGHT_STEP_PX = CONFIG.height?.stepPxPerLevel ?? 10;
+
 // World-space padding around the platform when allocating cache canvases:
 // objects can extend well above the platform top (windmill vanes, chapel
 // tower) and slightly below it (side walls, drop shadows).
@@ -533,6 +538,11 @@ export class Renderer {
         ctx.scale(CACHE_SCALE, CACHE_SCALE);
         ctx.translate(-wb.x, -wb.y);
 
+        // Two passes for elevation: (1) draw plinth/side strips under
+        // every raised tile so the lifted slab doesn't look like it's
+        // floating; (2) draw the actual terrain slabs lifted by height.
+        // Both passes go through the same depth-sorted iteration order
+        // (back-to-front isometric) so plinths don't occlude neighbours.
         for (let gy = 0; gy < this.tileMap.height; gy++)
         for (let gx = 0; gx < this.tileMap.width; gx++) {
             const id = this.tileMap.getTerrain(gx, gy);
@@ -545,8 +555,15 @@ export class Renderer {
             const asset = getAsset(id);
             if (!asset) continue;
             const { x, y } = cellToScreen(gx, gy);
+            const h = this.tileMap.getHeight(gx, gy);
+            const lift = h * HEIGHT_STEP_PX;
+            // Plinth under lifted tiles — a stone-colored isometric prism
+            // suggesting the rock face. Cheap, draws as a tinted polygon.
+            if (lift > 0) {
+                _drawElevationPlinth(ctx, x, y, lift);
+            }
             const dx = x - asset.anchorX;
-            const dy = y - asset.anchorY;
+            const dy = y - asset.anchorY - lift;
             const src = asset.displayCanvas || asset.canvas;
             ctx.drawImage(src, dx, dy, asset.width, asset.height);
         }
@@ -622,8 +639,18 @@ export class Renderer {
         const asset = getAsset(obj.assetId);
         if (!asset) return;
         const { x, y } = cellToScreen(obj.gx, obj.gy);
+        // Use the max height under the object footprint so multi-cell
+        // objects sit on the highest cell they cover.
+        let lift = 0;
+        const fp = obj.footprint || { w: 1, d: 1 };
+        for (let ix = 0; ix < fp.w; ix++)
+        for (let iy = 0; iy < fp.d; iy++) {
+            const h = this.tileMap.getHeight(obj.gx + ix, obj.gy + iy);
+            if (h > lift) lift = h;
+        }
+        lift *= HEIGHT_STEP_PX;
         const dx = x - asset.anchorX;
-        const dy = y - asset.anchorY;
+        const dy = y - asset.anchorY - lift;
         this._drawAssetImage(ctx, asset, dx, dy, obj.gx, obj.gy, obj.footprint, {
             flipH: obj.flipH,
             flipV: obj.flipV,
@@ -983,5 +1010,57 @@ export class Renderer {
             ctx.stroke();
         }
         ctx.restore();
+    }
+}
+
+/**
+ * Island Forge — draw a stone-colored isometric prism plinth under a
+ * raised terrain tile. `(x, y)` is the cell's anchor point at ground
+ * level (i.e. `cellToScreen(gx, gy)`); the slab itself draws `lift`
+ * pixels above that point, so the plinth fills the gap from `y` down
+ * to `y - lift + TH/2` and to either diamond side.
+ */
+function _drawElevationPlinth(ctx, x, y, lift) {
+    // The diamond top of the plinth sits at the lifted slab's base.
+    const topY = y - lift;
+    const halfW = TW / 2;
+    const halfH = TH / 2;
+
+    // Left side (cobble brown/cream blend).
+    ctx.beginPath();
+    ctx.moveTo(x - halfW, topY);          // upper-left corner
+    ctx.lineTo(x, topY + halfH);          // upper-front
+    ctx.lineTo(x, y + halfH);             // lower-front
+    ctx.lineTo(x - halfW, y);             // lower-left
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(140, 130, 110, 0.92)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(80, 70, 55, 0.55)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+
+    // Right side (darker — receives less sun).
+    ctx.beginPath();
+    ctx.moveTo(x + halfW, topY);
+    ctx.lineTo(x, topY + halfH);
+    ctx.lineTo(x, y + halfH);
+    ctx.lineTo(x + halfW, y);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(110, 100, 85, 0.94)';
+    ctx.fill();
+    ctx.stroke();
+
+    // Horizontal striations per height step to suggest stacked rock.
+    const steps = Math.round(lift / HEIGHT_STEP_PX);
+    if (steps > 1) {
+        ctx.strokeStyle = 'rgba(60, 50, 40, 0.28)';
+        for (let s = 1; s < steps; s++) {
+            const sy = topY + (s * HEIGHT_STEP_PX);
+            ctx.beginPath();
+            ctx.moveTo(x - halfW, sy);
+            ctx.lineTo(x, sy + halfH);
+            ctx.lineTo(x + halfW, sy);
+            ctx.stroke();
+        }
     }
 }
